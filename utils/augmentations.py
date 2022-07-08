@@ -21,6 +21,12 @@ class Albumentations:
             import albumentations as A
             check_version(A.__version__, '1.0.3', hard=True)  # version requirement
 
+            # T_always_app = [
+            #   A.GaussNoise(var_limit=(0.0021*255, 0.0023*255), mean=0, per_channel=False, always_apply=True),
+            #   A.GaussianBlur(blur_limit=(3, 7), sigma_limit=(100, 255), always_apply=True)
+            # ]
+            # self.transform_aa = A.Compose(T_always_app)
+
             T = [
                 A.Blur(p=0.01),
                 A.MedianBlur(p=0.01),
@@ -38,6 +44,9 @@ class Albumentations:
             LOGGER.info(colorstr('albumentations: ') + f'{e}')
 
     def __call__(self, im, labels, p=1.0):
+        # speed_img = self.transform_aa(image=im)  # transformed
+        # im = speed_img['image']
+
         if self.transform and random.random() < p:
             new = self.transform(image=im, bboxes=labels[:, 1:], class_labels=labels[:, 0])  # transformed
             im, labels = new['image'], np.array([[c, *b] for c, b in zip(new['class_labels'], new['bboxes'])])
