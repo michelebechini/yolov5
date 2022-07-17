@@ -63,17 +63,17 @@ def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, save_dir='.', names
         tpc = tp[i].cumsum(0)
 
         # Recall
-        recall = tpc / (n_l + eps)  # recall curve
+        recall = tpc / (n_l + eps)  # recall curve  # recall[:, i]  i=>[0.5, 0.95]
         r[ci] = np.interp(-px, -conf[i], recall[:, 0], left=0)  # negative x, xp because xp decreases
 
         # Precision
-        precision = tpc / (tpc + fpc)  # precision curve
+        precision = tpc / (tpc + fpc)  # precision curve    # precision[:, i]  i=>[0.5, 0.95]
         p[ci] = np.interp(-px, -conf[i], precision[:, 0], left=1)  # p at pr_score
 
         # AP from recall-precision curve
         for j in range(tp.shape[1]):
-            ap[ci, j], mpre, mrec = compute_ap(recall[:, j], precision[:, j])
-            if plot and j == 0:
+            ap[ci, j], mpre, mrec = compute_ap(recall[:, j], precision[:, j]) 
+            if plot and j == 0: # modify here to get the plot for all iou thresh (j==0 means only at iou==0.5)
                 py.append(np.interp(px, mrec, mpre))  # precision at mAP@0.5
 
     # Compute F1 (harmonic mean of precision and recall)
