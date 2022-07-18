@@ -27,33 +27,33 @@ class Albumentations:
             # ]
             # self.transform_aa = A.Compose(T_always_app)
 
-            T = [
-                A.RandomSunFlare(num_flare_circles_lower=1,
-                                 num_flare_circles_upper=10,
-                                 src_radius=100,
-                                 p=0.2),
-                A.OneOf([A.MotionBlur(blur_limit=(3,9)),
-                         A.MedianBlur(blur_limit=(3,7)),
-                         A.GlassBlur(sigma=0.5, max_delta=2)], p=0.3),
-                A.ToGray(p=0.1),
-                A.CLAHE(p=0.1),
-                A.RandomBrightnessContrast(brightness_limit=0.2,
-                                                      contrast_limit=0.2,
-                                                      p=0.3),
-                A.OneOf([A.GaussNoise(var_limit=40**2),
-                         A.ISONoise(color_shift=(0.1, 0.5), 
-                         intensity=(0.5, 1.0))], p=0.3),
-                A.RandomGamma(p=0.1),
-                A.ImageCompression(quality_lower=75, p=0.1)]  # transforms
-
             # T = [
-            #     A.Blur(p=0.01),
-            #     A.MedianBlur(p=0.01),
-            #     A.ToGray(p=0.01),
-            #     A.CLAHE(p=0.01),
-            #     A.RandomBrightnessContrast(p=0.0),
-            #     A.RandomGamma(p=0.0),
-            #     A.ImageCompression(quality_lower=75, p=0.0)]  # transforms
+            #     A.RandomSunFlare(num_flare_circles_lower=1,
+            #                      num_flare_circles_upper=10,
+            #                      src_radius=100,
+            #                      p=0.2),
+            #     A.OneOf([A.MotionBlur(blur_limit=(3,9)),
+            #              A.MedianBlur(blur_limit=(3,7)),
+            #              A.GlassBlur(sigma=0.5, max_delta=2)], p=0.3),
+            #     A.ToGray(p=0.1),
+            #     A.CLAHE(p=0.1),
+            #     A.RandomBrightnessContrast(brightness_limit=0.2,
+            #                                           contrast_limit=0.2,
+            #                                           p=0.3),
+            #     A.OneOf([A.GaussNoise(var_limit=40**2),
+            #              A.ISONoise(color_shift=(0.1, 0.5), 
+            #              intensity=(0.5, 1.0))], p=0.3),
+            #     A.RandomGamma(p=0.1),
+            #     A.ImageCompression(quality_lower=75, p=0.1)]  # transforms
+
+            T = [
+                A.Blur(p=0.01),
+                A.MedianBlur(p=0.01),
+                A.ToGray(p=0.01),
+                A.CLAHE(p=0.01),
+                A.RandomBrightnessContrast(p=0.0),
+                A.RandomGamma(p=0.0),
+                A.ImageCompression(quality_lower=75, p=0.0)]  # transforms
             self.transform = A.Compose(T, bbox_params=A.BboxParams(format='yolo', label_fields=['class_labels']))
 
             LOGGER.info(colorstr('albumentations: ') + ', '.join(f'{x}' for x in self.transform.transforms if x.p))

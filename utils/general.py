@@ -883,6 +883,55 @@ def non_max_suppression(prediction,
     return output
 
 
+def fake_non_max_suppression(prediction,
+                            conf_thres=0.25,
+                            iou_thres=0.45):
+    """Non-Maximum Suppression (NMS) on inference results to reject overlapping bounding boxes
+
+    Returns:
+         list of detections, on (n,6) tensor per image [xyxy, conf, cls]
+    """
+
+    bs = prediction.shape[0]  # batch size
+    nc = prediction.shape[2] - 5  # number of classes
+    xc = prediction[..., 4] > conf_thres  # candidates
+
+    # Checks
+    assert 0 <= conf_thres <= 1, f'Invalid Confidence threshold {conf_thres}, valid values are between 0.0 and 1.0'
+    assert 0 <= iou_thres <= 1, f'Invalid IoU {iou_thres}, valid values are between 0.0 and 1.0'
+
+    output = [torch.zeros((0, 6), device=prediction.device)] * bs
+    for xi, x in enumerate(prediction):  # image index, image inference
+        # Apply constraints
+        # x[((x[..., 2:4] < min_wh) | (x[..., 2:4] > max_wh)).any(1), 4] = 0  # width-height
+        x = x[xc[xi]]  # confidence
+
+        # If none remain process next image
+        if not x.shape[0]:
+            continue
+
+        # Compute conf
+        x[:, 5:] *= x[:, 4:5]  # conf = obj_conf * cls_conf
+
+        # Box (center x, center y, width, height) to (x1, y1, x2, y2)
+        box = xywh2xyxy(x[:, :4])
+
+        # Detections matrix nx6 (xyxy, conf, cls) (best class only)
+        conf, j = x[:, 5:].max(1, keepdim=True)
+        x = torch.cat((box, conf, j.float()), 1)[conf.view(-1) > conf_thres]
+
+        # Check shape
+        n = x.shape[0]  # number of boxes
+        if not n:  # no boxes
+            continue
+        else:  
+            x = x[x[:, 4].argsort(descending=True)[:10]]  # sort by confidence
+
+        output[xi] = x[[0]]
+
+    return output
+
+
 def strip_optimizer(f='best.pt', s=''):  # from utils.general import *; strip_optimizer()
     # Strip optimizer from 'f' to finalize training, optionally save as 's'
     x = torch.load(f, map_location=torch.device('cpu'))
@@ -972,6 +1021,9 @@ def apply_classifier(x, model, img, im0):
             x[i] = x[i][pred_cls1 == pred_cls2]  # retain matching class detections
 
     return x
+
+
+
 
 
 def increment_path(path, exist_ok=False, sep='', mkdir=False):

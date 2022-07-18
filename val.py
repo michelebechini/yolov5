@@ -188,6 +188,7 @@ def run(
     dt, p, r, f1, mp, mr, map50, map = [0.0, 0.0, 0.0], 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0
     loss = torch.zeros(3, device=device)
     jdict, stats, ap, ap_class = [], [], [], []
+    iou_set = []
     callbacks.run('on_val_start')
     pbar = tqdm(dataloader, desc=s, bar_format='{l_bar}{bar:10}{r_bar}{bar:-10b}')  # progress bar
     for batch_i, (im, targets, paths, shapes) in enumerate(pbar):
@@ -246,6 +247,9 @@ def run(
                     confusion_matrix.process_batch(predn, labelsn)
             stats.append((correct, pred[:, 4], pred[:, 5], labels[:, 0]))  # (correct, conf, pcls, tcls)
 
+            iou = box_iou(labelsn[:, 1:], predn[:, :4]).detach().to('cpu').numpy()  # native-space labels
+            iou_set.append(iou.max())
+
             # Save/log
             if save_txt:
                 save_one_txt(predn, save_conf, shape, file=save_dir / 'labels' / (path.stem + '.txt'))
@@ -259,6 +263,15 @@ def run(
             plot_images(im, output_to_target(out), paths, save_dir / f'val_batch{batch_i}_pred.jpg', names)  # pred
 
         callbacks.run('on_val_batch_end')
+
+    # Show IoU informations
+    print('\n\n')
+    print('IoU informations on the set:\n')
+    print('\nIoU number: ' + str(len(iou_set)) + '\n')
+    print('\nIoU mean: ' + str(np.mean(iou_set)) + '\n')
+    print('\nIoU median: ' + str((np.asarray(iou_set).max() + np.asarray(iou_set).min())/2) + '\n')
+    print('\nIoU min: ' + str((np.asarray(iou_set).min())) + '\n')
+    print('\nIoU max: ' + str((np.asarray(iou_set).max())) + '\n')
 
     # Compute metrics
     stats = [torch.cat(x, 0).cpu().numpy() for x in zip(*stats)]  # to numpy

@@ -49,7 +49,7 @@ def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, save_dir='.', names
     nc = unique_classes.shape[0]  # number of classes, number of detections
 
     # Create Precision-Recall curve and compute AP for each class
-    px, py = np.linspace(0, 1, 1000), []  # for plotting
+    px, py, ppy = np.linspace(0, 1, 1000), [], []  # for plotting
     ap, p, r = np.zeros((nc, tp.shape[1])), np.zeros((nc, 1000)), np.zeros((nc, 1000))
     for ci, c in enumerate(unique_classes):
         i = pred_cls == c
@@ -75,6 +75,8 @@ def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, save_dir='.', names
             ap[ci, j], mpre, mrec = compute_ap(recall[:, j], precision[:, j]) 
             if plot and j == 0: # modify here to get the plot for all iou thresh (j==0 means only at iou==0.5)
                 py.append(np.interp(px, mrec, mpre))  # precision at mAP@0.5
+            if plot:
+                ppy.append(np.interp(px, mrec, mpre))
 
     # Compute F1 (harmonic mean of precision and recall)
     f1 = 2 * p * r / (p + r + eps)
@@ -82,6 +84,8 @@ def ap_per_class(tp, conf, pred_cls, target_cls, plot=False, save_dir='.', names
     names = dict(enumerate(names))  # to dict
     if plot:
         plot_pr_curve(px, py, ap, Path(save_dir) / 'PR_curve.png', names)
+        plot_pr_curve_v2(px, ppy, ap, Path(save_dir) / 'PR_curve_v2.png', names)
+        plot_pr_curve_v2_zoomed(px, ppy, ap, Path(save_dir) / 'PR_curve_v2_zoomed.png', names)
         plot_mc_curve(px, f1, Path(save_dir) / 'F1_curve.png', names, ylabel='F1')
         plot_mc_curve(px, p, Path(save_dir) / 'P_curve.png', names, ylabel='Precision')
         plot_mc_curve(px, r, Path(save_dir) / 'R_curve.png', names, ylabel='Recall')
@@ -317,6 +321,7 @@ def plot_pr_curve(px, py, ap, save_dir=Path('pr_curve.png'), names=()):
     # Precision-recall curve
     fig, ax = plt.subplots(1, 1, figsize=(9, 6), tight_layout=True)
     py = np.stack(py, axis=1)
+    #print(py.shape)
 
     if 0 < len(names) < 21:  # display per-class legend if < 21 classes
         for i, y in enumerate(py.T):
@@ -329,6 +334,54 @@ def plot_pr_curve(px, py, ap, save_dir=Path('pr_curve.png'), names=()):
     ax.set_ylabel('Precision')
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
+    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+    fig.savefig(save_dir, dpi=250)
+    plt.close()
+
+
+def plot_pr_curve_v2(px, ppy, ap, save_dir=Path('pr_curve.png'), names=()):
+    # Precision-recall curve
+    fig, ax = plt.subplots(1, 1, figsize=(9, 6), tight_layout=True)
+    ppy_arr = np.asarray(ppy)
+    
+    for k in range(ppy_arr.shape[0]):
+        py = np.expand_dims(ppy_arr[k,:], axis=1)
+        #print(py.shape)
+        if 0 < len(names) < 21:  # display per-class legend if < 21 classes
+            for i, y in enumerate(py.T):
+                ax.plot(px, y, linewidth=1, label=f'IoU = {0.5 + 0.05*k:.2f}')  # plot(recall, precision)
+        else:
+            ax.plot(px, py, linewidth=1, color='grey')  # plot(recall, precision)
+
+    #ax.plot(px, ppy[0].mean(1), linewidth=3, color='blue', label='all classes %.3f mAP@0.5' % ap[:, 0].mean())
+    ax.set_xlabel('Recall')
+    ax.set_ylabel('Precision')
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0.7, 1)
+    plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
+    fig.savefig(save_dir, dpi=250)
+    plt.close()
+
+
+def plot_pr_curve_v2_zoomed(px, ppy, ap, save_dir=Path('pr_curve.png'), names=()):
+    # Precision-recall curve
+    fig, ax = plt.subplots(1, 1, figsize=(9, 6), tight_layout=True)
+    ppy_arr = np.asarray(ppy)
+    
+    for k in range(ppy_arr.shape[0]):
+        py = np.expand_dims(ppy_arr[k,:], axis=1)
+        #print(py.shape)
+        if 0 < len(names) < 21:  # display per-class legend if < 21 classes
+            for i, y in enumerate(py.T):
+                ax.plot(px, y, linewidth=1, label=f'IoU = {0.5 + 0.05*k:.2f}')  # plot(recall, precision)
+        else:
+            ax.plot(px, py, linewidth=1, color='grey')  # plot(recall, precision)
+
+    #ax.plot(px, ppy[0].mean(1), linewidth=3, color='blue', label='all classes %.3f mAP@0.5' % ap[:, 0].mean())
+    ax.set_xlabel('Recall')
+    ax.set_ylabel('Precision')
+    ax.set_xlim(0.95, 1)
+    ax.set_ylim(0.95, 1)
     plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
     fig.savefig(save_dir, dpi=250)
     plt.close()
@@ -353,3 +406,5 @@ def plot_mc_curve(px, py, save_dir=Path('mc_curve.png'), names=(), xlabel='Confi
     plt.legend(bbox_to_anchor=(1.04, 1), loc="upper left")
     fig.savefig(save_dir, dpi=250)
     plt.close()
+
+    
