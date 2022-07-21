@@ -264,15 +264,6 @@ def run(
 
         callbacks.run('on_val_batch_end')
 
-    # Show IoU informations
-    print('\n\n')
-    print('IoU informations on the set:\n')
-    print('\nIoU number: ' + str(len(iou_set)) + '\n')
-    print('\nIoU mean: ' + str(np.mean(iou_set)) + '\n')
-    print('\nIoU median: ' + str((np.asarray(iou_set).max() + np.asarray(iou_set).min())/2) + '\n')
-    print('\nIoU min: ' + str((np.asarray(iou_set).min())) + '\n')
-    print('\nIoU max: ' + str((np.asarray(iou_set).max())) + '\n')
-
     # Compute metrics
     stats = [torch.cat(x, 0).cpu().numpy() for x in zip(*stats)]  # to numpy
     if len(stats) and stats[0].any():
@@ -280,6 +271,14 @@ def run(
         ap50, ap = ap[:, 0], ap.mean(1)  # AP@0.5, AP@0.5:0.95
         mp, mr, map50, map = p.mean(), r.mean(), ap50.mean(), ap.mean()
         nt = np.bincount(stats[3].astype(int), minlength=nc)  # number of targets per class
+        # Show IoU informations
+        print('\n\n')
+        print('IoU informations on the set:\n')
+        print('\nIoU number: ' + str(len(iou_set)) + '\n')
+        print('\nIoU mean: ' + str(np.mean(iou_set)) + '\n')
+        print('\nIoU median: ' + str((np.asarray(iou_set).max() + np.asarray(iou_set).min())/2) + '\n')
+        print('\nIoU min: ' + str((np.asarray(iou_set).min())) + '\n')
+        print('\nIoU max: ' + str((np.asarray(iou_set).max())) + '\n')
     else:
         nt = torch.zeros(1)
 
