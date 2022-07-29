@@ -664,12 +664,12 @@ class LoadImagesAndLabels(Dataset):
             if fn.exists():  # load npy
                 im = np.load(fn)
             else:  # read image
-                #im = cv2.imread(f)  # BGR
-                im = cv2.imread(f, cv2.IMREAD_GRAYSCALE) # Grayscale
+                im = cv2.imread(f)  # BGR
+                #im = cv2.imread(f, cv2.IMREAD_GRAYSCALE) # Grayscale
                 # add speed noise to get "noised_im"
-                noised_im = speed_noise(im)
+                #noised_im = speed_noise(im)
                 # cast into BGR (3 channels)
-                im = cv2.merge([noised_im, noised_im, noised_im]) #BGR
+                #im = cv2.merge([noised_im, noised_im, noised_im]) #BGR
                 assert im is not None, f'Image Not Found {f}'
             h0, w0 = im.shape[:2]  # orig hw
             r = self.img_size / max(h0, w0)  # ratio
